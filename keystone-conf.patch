@@ -1,0 +1,27 @@
+--- keystone.conf	2020-02-18 18:41:48.812066854 -0500
++++ /root/keystone.conf	2020-02-13 08:59:01.511312450 -0500
+@@ -512,6 +512,7 @@
+ # are being invoked to validate attributes in the request environment, it can
+ # cause conflicts. (list value)
+ #methods = external,password,token,oauth1,mapped,application_credential
++methods=password,token,openid,application_credential
+
+ # Entry point for the password auth plugin module in the
+ # `keystone.auth.password` namespace. You do not need to set this unless you
+@@ -979,6 +980,9 @@
+ # trusted_dashboard=https://acme.example.com/auth/websso
+ # trusted_dashboard=https://beta.example.com/auth/websso (multi valued)
+ #trusted_dashboard =
++trusted_dashboard=http://onboarding.massopen.cloud/auth/websso/
++trusted_dashboard=https://onboarding.massopen.cloud/auth/websso/
++trusted_dashboard=https://kaizen.massopen.cloud/dashboard/auth/websso/
+
+ # Absolute path to an HTML file used as a Single Sign-On callback handler. This
+ # page is expected to redirect the user from keystone back to a trusted
+@@ -3099,3 +3103,6 @@
+
+ [ec2]
+ driver=keystone.contrib.ec2.backends.sql.Ec2
++
++[openid]
++remote_id_attribute=HTTP_OIDC_ISS

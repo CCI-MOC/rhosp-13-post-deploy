@@ -1,0 +1,49 @@
+--- 10-keystone_wsgi_main.conf	2020-02-18 18:41:49.294077949 -0500
++++ /var/lib/config-data-backup/keystone/etc/httpd/conf.d/10-keystone_wsgi_main.conf	2020-02-14 11:15:52.043899856 -0500
+@@ -17,6 +17,9 @@
+     Require all granted
+   </Directory>
+ 
+   ## Logging
+   ErrorLog "/var/log/httpd/keystone_wsgi_main_error.log"
+   ServerSignature Off
+@@ -26,4 +29,39 @@
+   WSGIProcessGroup keystone_main
+   WSGIScriptAlias / "/var/www/cgi-bin/keystone/keystone-public"
+   WSGIPassAuthorization On
++  LoadModule auth_openidc_module modules/mod_auth_openidc.so
++  OIDCClaimPrefix "OIDC-"
++  OIDCResponseType "id_token"
++  OIDCScope "openid email profile"
++  OIDCProviderMetadataURL "https://sso.massopen.cloud/auth/realms/moc/.well-known/openid-configuration"
++  OIDCClientID "kaizen"
++  OIDCClientSecret "2764fca1-2f8f-4eee-b5be-6af42bc2544b"
++  OIDCCryptoPassphrase "openstack"
++
++  OIDCCacheType memcache
++  OIDCMemCacheServers "172.16.32.10:11211 172.16.32.11:11211 172.16.32.28:11211"
++
++  # The following directives are necessary to support websso from Horizon
++  # (Per https://docs.openstack.org/keystone/pike/advanced-topics/federation/websso.html)
++  OIDCRedirectURI "https://kaizen.massopen.cloud:13000/v3/auth/OS-FEDERATION/identity_providers/moc/protocols/openid/websso"
++  OIDCRedirectURI "https://kaizen.massopen.cloud:13000/v3/auth/OS-FEDERATION/websso/openid"
++
++  <LocationMatch "/v3/auth/OS-FEDERATION/websso/openid">
++      AuthType "openid-connect"
++      Require valid-user
++  </LocationMatch>
++
++  <LocationMatch "/v3/auth/OS-FEDERATION/identity_providers/moc/protocols/openid/websso">
++      AuthType "openid-connect"
++      Require valid-user
++  </LocationMatch>
++
++  OIDCOAuthClientID "kaizen"
++  OIDCOAuthClientSecret "2764fca1-2f8f-4eee-b5be-6af42bc2544b"
++  OIDCOAuthIntrospectionEndpoint "https://sso.massopen.cloud/auth/realms/moc/protocol/openid-connect/token/introspect"
++
++  <Location ~ "/v3/OS-FEDERATION/identity_providers/moc/protocols/openid/auth">
++      AuthType oauth20
++      Require valid-user
++  </Location>
+ </VirtualHost>

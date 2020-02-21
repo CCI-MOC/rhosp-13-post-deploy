@@ -1,0 +1,78 @@
+---
+- name: apply post-deploy patches to controllers
+  hosts: controller
+  gather_facts: false
+  tasks:
+
+    ##
+    ## Director uses an inappropriate default for OPENSTACK_KEYSTONE_URL. We
+    ## can actually correct this in our deploy configuration by setting
+    ## horizon::keystone_url.
+    ##
+    - name: patch horizon OPENSTACK_KEYSTONE_URL
+      tags: [horizon]
+      command: >-
+        patch {{ patch_args|default('') }} -r - --batch --forward {{ item }}
+      args:
+        stdin: >-
+          {{ lookup('file', 'local_settings.patch') }}
+      register: result
+      changed_when: result.rc == 0
+      failed_when: result.rc != 0 and 'previously applied' not in result.stdout
+      loop:
+        - /var/lib/config-data/horizon/etc/openstack-dashboard/local_settings
+        - /var/lib/config-data/puppet-generated/horizon/etc/openstack-dashboard/local_settings
+      notify: restart horizon
+
+    ##
+    ## We need to make three changes to keystone.conf:
+    ##
+    ## 1. Set auth/methods to include openid
+    ## 2. Set openid/remote_id_attribute
+    ## 3. Set multiple values for trusted_dashboard
+    ##
+    ## 1 and 2 we can probably handle by adding some
+    ## keystone::config::keystone_config settings in ControllerExtraConfig,
+    ## but we do we do about a multi-valued attribute?
+    ##
+    - name: patch keystone openid
+      tags: [keystone]
+      command: >-
+        patch {{ patch_args|default('') }} -r - --batch --forward {{ item }}
+      args:
+        stdin: >-
+          {{ lookup('file', 'keystone-conf.patch') }}
+      register: result
+      changed_when: result.rc == 0
+      failed_when: result.rc != 0 and 'previously applied' not in result.stdout
+      loop:
+        - /var/lib/config-data/keystone/etc/keystone/keystone.conf
+        - /var/lib/config-data/puppet-generated/keystone/etc/keystone/keystone.conf
+      notify: restart keystone
+
+    ##
+    ## We need to make substantial changes to Keystone's httpd configuration
+    ## in order to support openid. Is there any way to implement this that
+    ## does *not* require us to patch tripleo-heat-templates?
+    ##
+    - name: patch keystone httpd
+      tags: [keystone]
+      command: >-
+        patch {{ patch_args|default('') }} -r - --batch --forward {{ item }}
+      args:
+        stdin: >-
+          {{ lookup('file', 'keystone-httpd.patch') }}
+      register: result
+      changed_when: result.rc == 0
+      failed_when: result.rc != 0 and 'previously applied' not in result.stdout
+      loop:
+        - /var/lib/config-data/keystone/etc/httpd/conf.d/10-keystone_wsgi_main.conf
+        - /var/lib/config-data/puppet-generated/keystone/etc/httpd/conf.d/10-keystone_wsgi_main.conf
+      notify: restart keystone
+
+  handlers:
+    - name: restart horizon
+      command: docker restart horizon
+
+    - name: restart keystone
+      command: docker restart keystone

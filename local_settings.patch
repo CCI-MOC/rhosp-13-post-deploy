@@ -1,0 +1,11 @@
+--- /var/lib/config-data/puppet-generated/horizon/etc/openstack-dashboard/local_settings	2020-02-18 18:42:40.378253761 -0500
++++ local_settings	2020-02-18 23:57:48.187233410 -0500
+@@ -217,7 +217,7 @@
+ #OPENSTACK_HOST = "127.0.0.1"
+ #OPENSTACK_KEYSTONE_URL = "http://%s:5000/v2.0" % OPENSTACK_HOST
+ #OPENSTACK_KEYSTONE_DEFAULT_ROLE = "_member_"
+-OPENSTACK_KEYSTONE_URL = "http://172.16.32.19:5000"
++OPENSTACK_KEYSTONE_URL = "https://kaizen.massopen.cloud:13000/v3"
+ OPENSTACK_KEYSTONE_DEFAULT_ROLE = "_member_"
+ 
+ # Enables keystone web single-sign-on if set to True.
